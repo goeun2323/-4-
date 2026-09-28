@@ -1,0 +1,1135 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>레지스탕스 아발론: 4인 스페셜 (자동 사회자)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Noto+Sans+KR:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        cinzel: ['Cinzel', 'serif'],
+                        sans: ['Noto Sans KR', 'sans-serif'],
+                    },
+                    colors: {
+                        avalon: {
+                            gold: '#d4af37',
+                            goldLight: '#f3e5ab',
+                            dark: '#0b0f19',
+                            card: '#161f33',
+                            accentBlue: '#2563eb',
+                            accentRed: '#dc2626',
+                            border: '#2a3859'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #0b0f19;
+            color: #e2e8f0;
+            font-family: 'Noto Sans KR', sans-serif;
+            touch-action: manipulation;
+        }
+        .cinzel { font-family: 'Cinzel', serif; }
+        .bg-pattern {
+            background-image: radial-gradient(circle at 50% 50%, rgba(30, 41, 59, 0.5) 0%, rgba(11, 15, 25, 0.95) 100%),
+                              url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%232a3859' fill-opacity='0.15'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+        }
+        .glow-gold {
+            box-shadow: 0 0 15px rgba(212, 175, 55, 0.3);
+        }
+        .glow-blue {
+            box-shadow: 0 0 15px rgba(37, 99, 235, 0.4);
+        }
+        .glow-red {
+            box-shadow: 0 0 15px rgba(220, 38, 38, 0.4);
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #0b0f19;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #2a3859;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body class="bg-pattern min-h-screen text-slate-100 flex flex-col justify-between select-none">
+
+    <!-- Header -->
+    <header class="border-b border-avalon-border bg-slate-950/80 backdrop-blur sticky top-0 z-30">
+        <div class="max-w-4xl mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <i class="fa-solid me-2 fa-shield-halved text-avalon-gold text-2xl"></i>
+                <div>
+                    <h1 class="cinzel font-bold text-xl md:text-2xl text-avalon-gold tracking-wider">AVALON <span class="text-xs bg-amber-500/20 text-amber-300 border border-amber-500/40 px-2 py-0.5 rounded-full font-sans">4인 스페셜</span></h1>
+                </div>
+            </div>
+            <div class="flex items-center gap-2">
+                <button id="ttsToggleBtn" onclick="toggleAudio()" class="px-3 py-1.5 rounded-lg border border-slate-700 bg-slate-900 hover:bg-slate-800 text-xs flex items-center gap-1.5 transition">
+                    <i id="ttsIcon" class="fa-solid fa-volume-high text-emerald-400"></i>
+                    <span id="ttsText" class="hidden sm:inline">음성 사회자 ON</span>
+                </button>
+                <button onclick="openRulesModal()" class="px-3 py-1.5 rounded-lg border border-slate-700 bg-slate-900 hover:bg-slate-800 text-xs flex items-center gap-1.5 text-slate-300 transition">
+                    <i class="fa-solid fa-book-open text-avalon-gold"></i>
+                    <span class="hidden sm:inline">게임 규칙</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-4xl mx-auto w-full px-4 py-6 flex-grow flex flex-col justify-center">
+
+        <!-- 1. SETUP VIEW -->
+        <section id="setupView" class="space-y-6">
+            <div class="text-center space-y-2">
+                <h2 class="cinzel text-2xl md:text-3xl font-bold text-avalon-gold">아발론 원정대 결성</h2>
+                <p class="text-slate-400 text-sm">4명의 플레이어 이름을 입력하고 게임을 시작하세요.</p>
+            </div>
+
+            <div class="bg-avalon-card border border-avalon-border rounded-2xl p-6 shadow-2xl max-w-lg mx-auto">
+                <form onsubmit="handleStartGame(event)" class="space-y-4">
+                    <div class="space-y-3">
+                        <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider">플레이어 4명 이름</label>
+                        <div class="grid grid-cols-1 gap-3">
+                            <div class="flex items-center gap-2 bg-slate-900/90 border border-slate-700 rounded-xl px-3 py-2">
+                                <span class="w-6 text-center text-xs text-amber-400 font-bold">P1</span>
+                                <input type="text" id="p0" required value="플레이어 1" class="bg-transparent w-full text-slate-200 text-sm focus:outline-none" placeholder="이름 입력">
+                            </div>
+                            <div class="flex items-center gap-2 bg-slate-900/90 border border-slate-700 rounded-xl px-3 py-2">
+                                <span class="w-6 text-center text-xs text-amber-400 font-bold">P2</span>
+                                <input type="text" id="p1" required value="플레이어 2" class="bg-transparent w-full text-slate-200 text-sm focus:outline-none" placeholder="이름 입력">
+                            </div>
+                            <div class="flex items-center gap-2 bg-slate-900/90 border border-slate-700 rounded-xl px-3 py-2">
+                                <span class="w-6 text-center text-xs text-amber-400 font-bold">P3</span>
+                                <input type="text" id="p2" required value="플레이어 3" class="bg-transparent w-full text-slate-200 text-sm focus:outline-none" placeholder="이름 입력">
+                            </div>
+                            <div class="flex items-center gap-2 bg-slate-900/90 border border-slate-700 rounded-xl px-3 py-2">
+                                <span class="w-6 text-center text-xs text-amber-400 font-bold">P4</span>
+                                <input type="text" id="p3" required value="플레이어 4" class="bg-transparent w-full text-slate-200 text-sm focus:outline-none" placeholder="이름 입력">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="p-4 bg-slate-900/60 rounded-xl border border-slate-800 space-y-2 text-xs text-slate-300">
+                        <div class="font-bold text-avalon-gold flex items-center gap-1.5">
+                            <i class="fa-solid fa-users text-amber-400"></i> 4인 전용 역할 구성:
+                        </div>
+                        <ul class="space-y-1 pl-2 border-l-2 border-amber-500/30">
+                            <li><strong class="text-blue-400">선 팀 (3명):</strong> 메르린 🧙‍♂️, 퍼시벌 🛡️, 아서의 충신 🗡️</li>
+                            <li><strong class="text-rose-400">악 팀 (1명):</strong> 암살자 (모드레드의 하수인) 🐍</li>
+                        </ul>
+                    </div>
+
+                    <button type="submit" class="w-full py-3.5 bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-slate-950 font-bold rounded-xl shadow-lg transition duration-200 glow-gold text-base flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-play"></i> 역할 배정 및 시작
+                    </button>
+                </form>
+            </div>
+        </section>
+
+        <!-- 2. ROLE REVEAL / PASS & PLAY VIEW -->
+        <section id="roleRevealView" class="hidden space-y-6 text-center max-w-lg mx-auto">
+            <div class="bg-avalon-card border border-avalon-border rounded-2xl p-6 shadow-2xl space-y-6">
+                <div class="space-y-2">
+                    <div class="text-xs font-semibold text-amber-400 uppercase tracking-widest">비밀 역할 확인 단계</div>
+                    <h2 id="roleRevealPlayerName" class="text-2xl font-bold text-slate-100">플레이어 1</h2>
+                    <p class="text-xs text-slate-400">화면을 본인만 볼 수 있도록 다른 사람에게 숨겨주세요.</p>
+                </div>
+
+                <div id="roleCover" class="py-12 bg-slate-900/80 border border-dashed border-slate-700 rounded-xl cursor-pointer hover:border-amber-500/50 transition flex flex-col items-center justify-center gap-3" onclick="revealRole()">
+                    <div class="w-16 h-16 rounded-full bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 text-2xl animate-pulse">
+                        <i class="fa-solid fa-lock"></i>
+                    </div>
+                    <p class="text-sm text-amber-300 font-semibold">터치하여 역할 확인하기</p>
+                </div>
+
+                <div id="roleCard" class="hidden py-6 bg-slate-900 border border-slate-700 rounded-xl space-y-4 px-4">
+                    <div id="roleIcon" class="text-5xl my-2">🧙‍♂️</div>
+                    <h3 id="roleTitle" class="text-xl font-bold">메르린 (Merlin)</h3>
+                    <p id="roleTeamBadge" class="inline-block px-3 py-1 rounded-full text-xs font-bold bg-blue-500/20 text-blue-300 border border-blue-500/30">선의 세력</p>
+                    <p id="roleDesc" class="text-xs text-slate-300 leading-relaxed bg-slate-950/50 p-3 rounded-lg border border-slate-800 text-left">
+                        설명 공간
+                    </p>
+                    <div id="roleKnowledge" class="text-xs text-amber-300 bg-amber-950/30 border border-amber-500/30 p-2.5 rounded-lg text-left">
+                        인식 정보 공간
+                    </div>
+                </div>
+
+                <button id="roleConfirmBtn" onclick="nextRoleReveal()" disabled class="w-full py-3 bg-slate-800 text-slate-500 font-bold rounded-xl transition cursor-not-allowed">
+                    확인 완료 (다음 플레이어에게 전달)
+                </button>
+            </div>
+        </section>
+
+        <!-- 3. NIGHT PHASE (MODERATOR ANNOUNCEMENT) VIEW -->
+        <section id="nightPhaseView" class="hidden text-center max-w-lg mx-auto space-y-6">
+            <div class="bg-avalon-card border border-avalon-border rounded-2xl p-8 shadow-2xl space-y-6 relative overflow-hidden">
+                <div class="absolute -right-10 -top-10 text-slate-800 text-9xl opacity-20 pointer-events-none">
+                    <i class="fa-solid fa-moon"></i>
+                </div>
+
+                <div class="space-y-2">
+                    <span class="text-xs font-semibold text-purple-400 uppercase tracking-widest">자동 사회자 진행</span>
+                    <h2 class="cinzel text-3xl font-bold text-slate-100">밤 단계 (Night Phase)</h2>
+                </div>
+
+                <!-- Night Progress Box -->
+                <div class="py-8 px-4 bg-slate-900/90 border border-purple-500/30 rounded-2xl shadow-inner space-y-4">
+                    <div id="nightStatusIcon" class="text-5xl text-purple-400 animate-bounce">
+                        <i class="fa-solid fa-eye-slash"></i>
+                    </div>
+                    <p id="nightInstruction" class="text-base font-medium text-slate-200 leading-relaxed min-h-[60px] flex items-center justify-center">
+                        모두 눈을 감아주세요.
+                    </p>
+                </div>
+
+                <div class="w-full bg-slate-900 h-2 rounded-full overflow-hidden border border-slate-800">
+                    <div id="nightProgressBar" class="bg-purple-500 h-full w-0 transition-all duration-300"></div>
+                </div>
+
+                <div class="flex gap-3">
+                    <button id="skipNightBtn" onclick="skipNightPhase()" class="w-full py-3 bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold rounded-xl text-xs transition border border-slate-700">
+                        사회자 멘트 건너뛰기
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. MAIN GAME BOARD VIEW -->
+        <section id="gameBoardView" class="hidden space-y-6">
+
+            <!-- Top Info Bar: Quest Track & Rejection Track -->
+            <div class="bg-avalon-card border border-avalon-border rounded-2xl p-4 shadow-xl space-y-4">
+                <div class="flex flex-wrap justify-between items-center gap-2 border-b border-slate-800 pb-3">
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs text-slate-400 uppercase tracking-wider">라운드:</span>
+                        <span id="currentRoundText" class="font-bold text-avalon-gold text-lg">1 / 5</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs text-slate-400">원정 거부 횟수:</span>
+                        <div id="rejectionTrack" class="flex gap-1">
+                            <span class="w-5 h-5 rounded-full border border-slate-700 bg-slate-900 flex items-center justify-center text-[10px]">1</span>
+                            <span class="w-5 h-5 rounded-full border border-slate-700 bg-slate-900 flex items-center justify-center text-[10px]">2</span>
+                            <span class="w-5 h-5 rounded-full border border-slate-700 bg-slate-900 flex items-center justify-center text-[10px]">3</span>
+                            <span class="w-5 h-5 rounded-full border border-slate-700 bg-slate-900 flex items-center justify-center text-[10px]">4</span>
+                            <span class="w-5 h-5 rounded-full border border-rose-500/50 bg-rose-950/50 text-rose-400 flex items-center justify-center text-[10px] font-bold">5</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quest Board Track (5 Quests) -->
+                <div class="grid grid-cols-5 gap-2 md:gap-3 text-center">
+                    <!-- Quest Slot Template generated via JS -->
+                    <div id="quest0" class="bg-slate-900/90 border border-slate-700 rounded-xl p-2.5 flex flex-col items-center gap-1">
+                        <span class="text-[10px] text-slate-400 font-semibold">Q1</span>
+                        <div class="w-8 h-8 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-xs font-bold text-amber-400 shadow-inner">2명</div>
+                        <span class="text-[10px] text-slate-500 font-bold status-tag">대기</span>
+                    </div>
+                    <div id="quest1" class="bg-slate-900/90 border border-slate-700 rounded-xl p-2.5 flex flex-col items-center gap-1">
+                        <span class="text-[10px] text-slate-400 font-semibold">Q2</span>
+                        <div class="w-8 h-8 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-xs font-bold text-amber-400 shadow-inner">2명</div>
+                        <span class="text-[10px] text-slate-500 font-bold status-tag">대기</span>
+                    </div>
+                    <div id="quest2" class="bg-slate-900/90 border border-slate-700 rounded-xl p-2.5 flex flex-col items-center gap-1">
+                        <span class="text-[10px] text-slate-400 font-semibold">Q3</span>
+                        <div class="w-8 h-8 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-xs font-bold text-amber-400 shadow-inner">3명</div>
+                        <span class="text-[10px] text-slate-500 font-bold status-tag">대기</span>
+                    </div>
+                    <div id="quest3" class="bg-slate-900/90 border border-slate-700 rounded-xl p-2.5 flex flex-col items-center gap-1">
+                        <span class="text-[10px] text-slate-400 font-semibold">Q4</span>
+                        <div class="w-8 h-8 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-xs font-bold text-amber-400 shadow-inner">2명</div>
+                        <span class="text-[10px] text-slate-500 font-bold status-tag">대기</span>
+                    </div>
+                    <div id="quest4" class="bg-slate-900/90 border border-slate-700 rounded-xl p-2.5 flex flex-col items-center gap-1">
+                        <span class="text-[10px] text-slate-400 font-semibold">Q5</span>
+                        <div class="w-8 h-8 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-xs font-bold text-amber-400 shadow-inner">3명</div>
+                        <span class="text-[10px] text-slate-500 font-bold status-tag">대기</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Current Action Area -->
+            <div class="bg-avalon-card border border-avalon-border rounded-2xl p-6 shadow-xl space-y-6">
+
+                <!-- Leader Header -->
+                <div class="flex flex-wrap justify-between items-center bg-slate-900/80 p-4 rounded-xl border border-slate-800 gap-3">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-full bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400 text-lg">
+                            <i class="fa-solid fa-crown"></i>
+                        </div>
+                        <div>
+                            <span class="text-xs text-slate-400 font-medium">현재 원정 리더 (왕)</span>
+                            <h3 id="currentLeaderName" class="text-lg font-bold text-amber-300">플레이어 1</h3>
+                        </div>
+                    </div>
+                    <div id="leaderTaskBadge" class="text-xs font-semibold px-3 py-1.5 rounded-lg bg-amber-500/10 text-amber-300 border border-amber-500/30">
+                        원정대원 <span id="requiredMemberCount">2</span>명 지목 필요
+                    </div>
+                </div>
+
+                <!-- Player Selection List -->
+                <div class="space-y-3">
+                    <div class="flex justify-between items-center text-xs text-slate-400 px-1">
+                        <span>원정대원으로 참여시킬 플레이어를 선택하세요</span>
+                        <span id="selectionCounter" class="text-amber-400 font-bold">0 / 2 선택됨</span>
+                    </div>
+
+                    <div id="playerSelectionGrid" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <!-- Rendered by JS -->
+                    </div>
+                </div>
+
+                <!-- Team Proposal Action Button -->
+                <button id="proposeTeamBtn" onclick="submitTeamProposal()" disabled class="w-full py-3.5 bg-slate-800 text-slate-500 font-bold rounded-xl transition cursor-not-allowed">
+                    원정대 구성 완료 및 투표 진행
+                </button>
+            </div>
+        </section>
+
+        <!-- 5. TEAM VOTING MODAL / SCREEN -->
+        <div id="voteModal" class="hidden fixed inset-0 bg-slate-950/90 backdrop-blur-md z-40 flex items-center justify-center p-4">
+            <div class="bg-avalon-card border border-avalon-border rounded-2xl p-6 shadow-2xl max-w-md w-full space-y-6 text-center">
+                <div class="space-y-1">
+                    <span class="text-xs text-amber-400 uppercase tracking-widest font-semibold">찬반 투표 단계</span>
+                    <h3 class="text-xl font-bold text-slate-100">원정대 구성 찬반 투표</h3>
+                </div>
+
+                <div class="p-4 bg-slate-900/90 rounded-xl border border-slate-800 space-y-2">
+                    <div class="text-xs text-slate-400">지목된 원정대원:</div>
+                    <div id="proposedTeamNames" class="text-base font-bold text-amber-300">
+                        플레이어 1, 플레이어 2
+                    </div>
+                </div>
+
+                <div id="voteStepContainer" class="space-y-4">
+                    <!-- Voting Pass & Play step by step -->
+                    <div class="text-xs text-slate-300">
+                        현재 투표자: <strong id="voterName" class="text-amber-400 text-sm">플레이어 1</strong>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <button onclick="castVote(true)" class="py-4 bg-emerald-950/60 hover:bg-emerald-900 border border-emerald-500/40 text-emerald-300 font-bold rounded-xl transition flex flex-col items-center gap-1 shadow-lg">
+                            <i class="fa-solid fa-circle-check text-2xl"></i>
+                            <span>찬성 (Approve)</span>
+                        </button>
+                        <button onclick="castVote(false)" class="py-4 bg-rose-950/60 hover:bg-rose-900 border border-rose-500/40 text-rose-300 font-bold rounded-xl transition flex flex-col items-center gap-1 shadow-lg">
+                            <i class="fa-solid fa-circle-xmark text-2xl"></i>
+                            <span>반대 (Reject)</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Vote Result Reveal Section -->
+                <div id="voteResultContainer" class="hidden space-y-4">
+                    <h4 id="voteOutcomeTitle" class="text-2xl font-bold">원정대 승인!</h4>
+                    <div id="voteBreakdown" class="grid grid-cols-4 gap-2 text-xs">
+                        <!-- JS populated -->
+                    </div>
+                    <button id="proceedQuestBtn" onclick="startQuestExecution()" class="w-full py-3.5 bg-gradient-to-r from-amber-600 to-amber-500 text-slate-950 font-bold rounded-xl shadow-lg">
+                        원정 수행 진행하기
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 6. QUEST EXECUTION MODAL (SECRET SUCCESS/FAIL) -->
+        <div id="questModal" class="hidden fixed inset-0 bg-slate-950/95 backdrop-blur-md z-40 flex items-center justify-center p-4">
+            <div class="bg-avalon-card border border-avalon-border rounded-2xl p-6 shadow-2xl max-w-md w-full space-y-6 text-center">
+                <div class="space-y-1">
+                    <span class="text-xs text-blue-400 uppercase tracking-widest font-semibold">비밀 원정 수행</span>
+                    <h3 class="text-xl font-bold text-slate-100">원정 결과 카드 선택</h3>
+                    <p class="text-xs text-slate-400">자신의 대서에 맞춰 성공/실패 카드를 제출하세요.</p>
+                </div>
+
+                <div class="p-4 bg-slate-900/90 rounded-xl border border-slate-800 space-y-1">
+                    <div class="text-xs text-slate-400">현재 원정 대원:</div>
+                    <div id="questActorName" class="text-lg font-bold text-amber-300">
+                        플레이어 1
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <button onclick="submitQuestCard(true)" class="py-6 bg-blue-950/80 hover:bg-blue-900 border border-blue-500/50 text-blue-300 font-bold rounded-xl transition flex flex-col items-center gap-2 shadow-xl">
+                        <i class="fa-solid fa-shield text-3xl"></i>
+                        <span>원정 성공 (Success)</span>
+                        <span class="text-[10px] text-slate-400 font-normal">선/악 세력 모두 제출 가능</span>
+                    </button>
+                    <button id="questFailBtn" onclick="submitQuestCard(false)" class="py-6 bg-rose-950/80 hover:bg-rose-900 border border-rose-500/50 text-rose-300 font-bold rounded-xl transition flex flex-col items-center gap-2 shadow-xl">
+                        <i class="fa-solid fa-skull text-3xl"></i>
+                        <span>원정 실패 (Fail)</span>
+                        <span class="text-[10px] text-rose-400/80 font-normal">악의 세력만 제출 가능</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 7. ASSASSIN STAGE MODAL -->
+        <div id="assassinModal" class="hidden fixed inset-0 bg-slate-950/95 backdrop-blur-md z-50 flex items-center justify-center p-4">
+            <div class="bg-avalon-card border border-rose-500/40 rounded-2xl p-6 shadow-2xl max-w-md w-full space-y-6 text-center">
+                <div class="space-y-2">
+                    <div class="w-12 h-12 mx-auto rounded-full bg-rose-500/10 border border-rose-500/40 flex items-center justify-center text-rose-400 text-2xl">
+                        <i class="fa-solid fa-crosshairs"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold text-rose-400">최후의 암살 단계</h3>
+                    <p class="text-xs text-slate-300 leading-relaxed">
+                        선의 세력이 3번의 원정에 성공했습니다!<br>
+                        <strong>암살자</strong>는 누가 <strong>메르린(Merlin)</strong>인지 지목하세요.<br>
+                        메르린 암살 시 <span class="text-rose-400 font-bold">악의 세력 역전 승리</span>!
+                    </p>
+                </div>
+
+                <div id="assassinTargetGrid" class="grid grid-cols-1 gap-2">
+                    <!-- JS populated -->
+                </div>
+            </div>
+        </div>
+
+        <!-- 8. GAME OVER / RESULT VIEW -->
+        <section id="gameOverView" class="hidden text-center max-w-lg mx-auto space-y-6">
+            <div class="bg-avalon-card border border-avalon-border rounded-2xl p-8 shadow-2xl space-y-6">
+                <div id="victoryBadge" class="w-20 h-20 mx-auto rounded-full bg-amber-500/20 border border-amber-500/50 flex items-center justify-center text-amber-400 text-4xl shadow-xl">
+                    <i class="fa-solid fa-trophy"></i>
+                </div>
+
+                <div class="space-y-2">
+                    <h2 id="victoryTitle" class="text-3xl font-bold cinzel text-amber-300">선의 세력 승리!</h2>
+                    <p id="victoryDesc" class="text-xs text-slate-300">
+                        아발론의 원정을 성공적으로 마쳤습니다.
+                    </p>
+                </div>
+
+                <!-- True Identity Unveil -->
+                <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-4 text-left space-y-3">
+                    <h4 class="text-xs font-bold text-amber-400 uppercase tracking-wider border-b border-slate-800 pb-2">모든 플레이어 정체 공개</h4>
+                    <div id="finalIdentityList" class="space-y-2 text-xs">
+                        <!-- JS populated -->
+                    </div>
+                </div>
+
+                <button onclick="resetGame()" class="w-full py-3.5 bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-slate-950 font-bold rounded-xl shadow-lg transition">
+                    새 게임 시작하기
+                </button>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- RULES MODAL -->
+    <div id="rulesModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur z-50 flex items-center justify-center p-4">
+        <div class="bg-avalon-card border border-avalon-border rounded-2xl p-6 shadow-2xl max-w-lg w-full max-h-[85vh] flex flex-col justify-between space-y-4">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+                <h3 class="text-lg font-bold text-avalon-gold flex items-center gap-2">
+                    <i class="fa-solid fa-scroll"></i> 4인 전용 아발론 규칙 가이드
+                </h3>
+                <button onclick="closeRulesModal()" class="text-slate-400 hover:text-slate-200">
+                    <i class="fa-solid fa-xmark text-xl"></i>
+                </button>
+            </div>
+
+            <div class="space-y-4 text-xs text-slate-300 overflow-y-auto pr-2 custom-scrollbar">
+                <div>
+                    <h4 class="font-bold text-amber-400 text-sm mb-1">1. 역할 및 세력</h4>
+                    <p class="leading-relaxed">
+                        • <strong>선 세력 (3명):</strong> 메르린, 퍼시벌, 아서의 충신<br>
+                        • <strong>악 세력 (1명):</strong> 암살자 (혼자서 3명의 선 세력을 상대)
+                    </p>
+                </div>
+                <div>
+                    <h4 class="font-bold text-amber-400 text-sm mb-1">2. 특수 직업 능력</h4>
+                    <p class="leading-relaxed">
+                        • <strong>메르린:</strong> 악 세력(암살자)이 누구인지 보입니다.<br>
+                        • <strong>퍼시벌:</strong> 메르린이 누구인지 보입니다 (메르린을 보호해야함).<br>
+                        • <strong>암살자:</strong> 선팀이 3승을 하더라도 메르린을 맞추면 최종 승리합니다.
+                    </p>
+                </div>
+                <div>
+                    <h4 class="font-bold text-amber-400 text-sm mb-1">3. 라운드별 필요 원정 인원</h4>
+                    <p class="leading-relaxed">
+                        • Q1: 2명 | Q2: 2명 | Q3: 3명 | Q4: 2명 | Q5: 3명<br>
+                        • 원정에 <strong>실패 카드가 1장 이상</strong> 나오면 해당 원정은 실패합니다.
+                    </p>
+                </div>
+                <div>
+                    <h4 class="font-bold text-amber-400 text-sm mb-1">4. 승리 조건</h4>
+                    <p class="leading-relaxed">
+                        • <strong>선 팀 승리:</strong> 3번의 원정 성공 + 메르린이 암살당하지 않음.<br>
+                        • <strong>악 팀 승리:</strong> 3번의 원정 실패 OR 원정 거부 5회 연속 발생 OR 암살자가 메르린 지목 성공!
+                    </p>
+                </div>
+            </div>
+
+            <button onclick="closeRulesModal()" class="w-full py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold rounded-xl text-xs transition">
+                닫기
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Game State Engine
+        let state = {
+            players: [], // [{ name, role, isGood }]
+            leaderIdx: 0,
+            currentRound: 0, // 0 to 4
+            rejections: 0, // 0 to 5
+            questHistory: [], // ['success', 'fail']
+            questSizes: [2, 2, 3, 2, 3],
+            selectedTeam: [],
+            votes: {}, // { playerIdx: true/false }
+            questCards: [], // [true, false]
+            revealIdx: 0,
+            audioEnabled: true,
+            nightStep: 0,
+        };
+
+        const ROLES = {
+            MERLIN: { name: '메르린 (Merlin)', isGood: true, icon: '🧙‍♂️', desc: '당신은 악의 무리(암살자)의 정체를 알고 있습니다. 단, 정체를 들키면 암살당할 수 있으니 티나지 않게 도우세요.' },
+            PERCIVAL: { name: '퍼시벌 (Percival)', isGood: true, icon: '🛡️', desc: '당신은 위대한 현자 메르린의 정체를 알고 있습니다. 메르린이 암살자에게 노출되지 않도록 교란하고 보호하세요.' },
+            LOYAL: { name: '아서의 충신 (Servant)', isGood: true, icon: '🗡️', desc: '당신은 정의로운 충신입니다. 특수 능력은 없지만 원정이 성공하도록 추리하고 지원하세요.' },
+            ASSASSIN: { name: '암살자 (Assassin)', isGood: false, icon: '🐍', desc: '당신은 홀로 침투한 악의 무리입니다. 원정을 방해하거나, 선팀이 3승을 거두었을 때 메르린을 암살하세요.' }
+        };
+
+        // Web Audio Synthesizer for SFX
+        const playSFX = (type) => {
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+
+                if (type === 'click') {
+                    osc.frequency.setValueAtTime(400, ctx.currentTime);
+                    gain.gain.setValueAtTime(0.1, ctx.currentTime);
+                    osc.start();
+                    osc.stop(ctx.currentTime + 0.05);
+                } else if (type === 'fanfare') {
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(523.25, ctx.currentTime);
+                    osc.frequency.setValueAtTime(659.25, ctx.currentTime + 0.1);
+                    osc.frequency.setValueAtTime(783.99, ctx.currentTime + 0.2);
+                    gain.gain.setValueAtTime(0.2, ctx.currentTime);
+                    osc.start();
+                    osc.stop(ctx.currentTime + 0.4);
+                } else if (type === 'fail') {
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(300, ctx.currentTime);
+                    osc.frequency.setValueAtTime(180, ctx.currentTime + 0.15);
+                    gain.gain.setValueAtTime(0.2, ctx.currentTime);
+                    osc.start();
+                    osc.stop(ctx.currentTime + 0.3);
+                }
+            } catch (e) { console.log(e); }
+        };
+
+        // Text-To-Speech (Automated Moderator)
+        const speak = (text, onEndCallback = null) => {
+            if (!state.audioEnabled || !('speechSynthesis' in window)) {
+                if (onEndCallback) setTimeout(onEndCallback, 2500);
+                return;
+            }
+
+            window.speechSynthesis.cancel(); // Stop current speech
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'ko-KR';
+            utterance.rate = 0.95;
+            utterance.pitch = 0.9;
+
+            if (onEndCallback) {
+                utterance.onend = onEndCallback;
+            }
+
+            window.speechSynthesis.speak(utterance);
+        };
+
+        function toggleAudio() {
+            state.audioEnabled = !state.audioEnabled;
+            const icon = document.getElementById('ttsIcon');
+            const text = document.getElementById('ttsText');
+
+            if (state.audioEnabled) {
+                icon.className = 'fa-solid fa-volume-high text-emerald-400';
+                text.innerText = '음성 사회자 ON';
+                speak('음성 사회자가 활성화되었습니다.');
+            } else {
+                icon.className = 'fa-solid fa-volume-xmark text-slate-500';
+                text.innerText = '음성 사회자 OFF';
+                window.speechSynthesis.cancel();
+            }
+        }
+
+        function handleStartGame(e) {
+            e.preventDefault();
+            playSFX('click');
+
+            const names = [
+                document.getElementById('p0').value.trim() || '플레이어 1',
+                document.getElementById('p1').value.trim() || '플레이어 2',
+                document.getElementById('p2').value.trim() || '플레이어 3',
+                document.getElementById('p3').value.trim() || '플레이어 4'
+            ];
+
+            // Shuffle Roles for 4 Players
+            const roleList = [ROLES.MERLIN, ROLES.PERCIVAL, ROLES.LOYAL, ROLES.ASSASSIN];
+            const shuffledRoles = roleList.sort(() => Math.random() - 0.5);
+
+            state.players = names.map((name, idx) => ({
+                id: idx,
+                name: name,
+                role: shuffledRoles[idx]
+            }));
+
+            state.leaderIdx = Math.floor(Math.random() * 4);
+            state.currentRound = 0;
+            state.rejections = 0;
+            state.questHistory = [];
+            state.revealIdx = 0;
+
+            // Switch to Role Reveal View
+            document.getElementById('setupView').classList.add('hidden');
+            document.getElementById('roleRevealView').classList.remove('hidden');
+
+            setupRoleRevealStep();
+        }
+
+        function setupRoleRevealStep() {
+            const player = state.players[state.revealIdx];
+            document.getElementById('roleRevealPlayerName').innerText = `${player.name} (${state.revealIdx + 1}/4)`;
+            document.getElementById('roleCover').classList.remove('hidden');
+            document.getElementById('roleCard').classList.add('hidden');
+
+            const confirmBtn = document.getElementById('roleConfirmBtn');
+            confirmBtn.disabled = true;
+            confirmBtn.className = 'w-full py-3 bg-slate-800 text-slate-500 font-bold rounded-xl transition cursor-not-allowed';
+            confirmBtn.innerText = '확인 완료 (다음 플레이어에게 전달)';
+        }
+
+        function revealRole() {
+            playSFX('click');
+            const player = state.players[state.revealIdx];
+            const role = player.role;
+
+            document.getElementById('roleCover').classList.add('hidden');
+            const roleCard = document.getElementById('roleCard');
+            roleCard.classList.remove('hidden');
+
+            document.getElementById('roleIcon').innerText = role.icon;
+            document.getElementById('roleTitle').innerText = role.name;
+            document.getElementById('roleDesc').innerText = role.desc;
+
+            const teamBadge = document.getElementById('roleTeamBadge');
+            if (role.isGood) {
+                teamBadge.innerText = '선의 세력 (Good)';
+                teamBadge.className = 'inline-block px-3 py-1 rounded-full text-xs font-bold bg-blue-500/20 text-blue-300 border border-blue-500/30';
+            } else {
+                teamBadge.innerText = '악의 세력 (Evil)';
+                teamBadge.className = 'inline-block px-3 py-1 rounded-full text-xs font-bold bg-rose-500/20 text-rose-300 border border-rose-500/30';
+            }
+
+            // Secret Knowledge Generation
+            const knowledgeBox = document.getElementById('roleKnowledge');
+            if (role === ROLES.MERLIN) {
+                const assassin = state.players.find(p => !p.role.isGood);
+                knowledgeBox.innerHTML = `<i class="fa-solid fa-eye text-amber-400"></i> [메르린 직관] 악의 세력(암살자): <strong class="text-rose-400 font-bold">${assassin.name}</strong>`;
+            } else if (role === ROLES.PERCIVAL) {
+                const merlin = state.players.find(p => p.role === ROLES.MERLIN);
+                knowledgeBox.innerHTML = `<i class="fa-solid fa-shield-cat text-amber-400"></i> [퍼시벌 직관] 진짜 메르린: <strong class="text-blue-400 font-bold">${merlin.name}</strong>`;
+            } else if (role === ROLES.ASSASSIN) {
+                knowledgeBox.innerHTML = `<i class="fa-solid fa-mask text-rose-400"></i> [암살자 직관] 당신은 혼자입니다. 선 세력 3명을 모두 속이세요!`;
+            } else {
+                knowledgeBox.innerHTML = `<i class="fa-solid fa-user-shield text-slate-400"></i> [충신] 아발론의 승리를 위해 당신의 추리를 펼치세요.`;
+            }
+
+            const confirmBtn = document.getElementById('roleConfirmBtn');
+            confirmBtn.disabled = false;
+            confirmBtn.className = 'w-full py-3 bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 text-slate-950 font-bold rounded-xl transition cursor-pointer shadow-lg';
+        }
+
+        function nextRoleReveal() {
+            playSFX('click');
+            state.revealIdx++;
+
+            if (state.revealIdx < 4) {
+                setupRoleRevealStep();
+            } else {
+                // All roles confirmed -> Start Night Phase (Automated Moderator)
+                document.getElementById('roleRevealView').classList.add('hidden');
+                document.getElementById('nightPhaseView').classList.remove('hidden');
+                startNightPhase();
+            }
+        }
+
+        const nightSteps = [
+            {
+                text: "모든 기사들은 눈을 감아주세요. 아발론에 밤이 찾아왔습니다.",
+                icon: "fa-eye-slash",
+                duration: 4000
+            },
+            {
+                text: "악의 세력, 암살자는 눈을 뜨고 본인의 존재를 확인하세요.",
+                icon: "fa-mask",
+                duration: 4000
+            },
+            {
+                text: "암살자는 다시 눈을 감아주세요.",
+                icon: "fa-eye-slash",
+                duration: 3000
+            },
+            {
+                text: "메르린은 눈을 뜨세요. 암살자는 엄지손가락을 들어 올려 메르린에게 정체를 표시하세요.",
+                icon: "fa-hat-wizard",
+                duration: 5000
+            },
+            {
+                text: "암살자는 손을 내리고, 메르린은 눈을 감아주세요.",
+                icon: "fa-eye-slash",
+                duration: 3000
+            },
+            {
+                text: "퍼시벌은 눈을 뜨세요. 메르린은 엄지손가락을 들어 올려 퍼시벌에게 정체를 알리세요.",
+                icon: "fa-shield",
+                duration: 5000
+            },
+            {
+                text: "메르린은 손을 내리고, 퍼시벌도 눈을 감아주세요.",
+                icon: "fa-eye-slash",
+                duration: 3000
+            },
+            {
+                text: "모두 눈을 뜨세요! 첫 번째 원정대의 리더가 원정대원을 선출합니다.",
+                icon: "fa-sun",
+                duration: 4000
+            }
+        ];
+
+        let nightTimer = null;
+
+        function startNightPhase() {
+            state.nightStep = 0;
+            executeNightStep();
+        }
+
+        function executeNightStep() {
+            if (state.nightStep >= nightSteps.length) {
+                // Night ended -> Go to Main Board
+                document.getElementById('nightPhaseView').classList.add('hidden');
+                document.getElementById('gameBoardView').classList.remove('hidden');
+                renderGameBoard();
+                return;
+            }
+
+            const step = nightSteps[state.nightStep];
+            document.getElementById('nightInstruction').innerText = step.text;
+            document.getElementById('nightStatusIcon').innerHTML = `<i class="fa-solid ${step.icon}"></i>`;
+
+            const bar = document.getElementById('nightProgressBar');
+            bar.style.width = `${((state.nightStep + 1) / nightSteps.length) * 100}%`;
+
+            speak(step.text, () => {
+                nightTimer = setTimeout(() => {
+                    state.nightStep++;
+                    executeNightStep();
+                }, 1000);
+            });
+        }
+
+        function skipNightPhase() {
+            if (nightTimer) clearTimeout(nightTimer);
+            window.speechSynthesis.cancel();
+            document.getElementById('nightPhaseView').classList.add('hidden');
+            document.getElementById('gameBoardView').classList.remove('hidden');
+            renderGameBoard();
+        }
+
+        function renderGameBoard() {
+            // Update Round Info
+            document.getElementById('currentRoundText').innerText = `${state.currentRound + 1} / 5`;
+
+            // Update Rejection Track
+            const rejTrack = document.getElementById('rejectionTrack').children;
+            for (let i = 0; i < 5; i++) {
+                if (i < state.rejections) {
+                    rejTrack[i].className = 'w-5 h-5 rounded-full border border-rose-500 bg-rose-600 text-white flex items-center justify-center text-[10px] font-bold shadow';
+                } else {
+                    rejTrack[i].className = 'w-5 h-5 rounded-full border border-slate-700 bg-slate-900 text-slate-400 flex items-center justify-center text-[10px]';
+                }
+            }
+
+            // Update Quest Track Status
+            for (let q = 0; q < 5; q++) {
+                const questEl = document.getElementById(`quest${q}`);
+                const statusTag = questEl.querySelector('.status-tag');
+
+                if (q < state.questHistory.length) {
+                    const res = state.questHistory[q];
+                    if (res === 'success') {
+                        questEl.className = 'bg-blue-950/80 border border-blue-500 rounded-xl p-2.5 flex flex-col items-center gap-1 glow-blue';
+                        statusTag.innerText = '성공';
+                        statusTag.className = 'text-[10px] text-blue-400 font-bold status-tag';
+                    } else {
+                        questEl.className = 'bg-rose-950/80 border border-rose-500 rounded-xl p-2.5 flex flex-col items-center gap-1 glow-red';
+                        statusTag.innerText = '실패';
+                        statusTag.className = 'text-[10px] text-rose-400 font-bold status-tag';
+                    }
+                } else if (q === state.currentRound) {
+                    questEl.className = 'bg-amber-950/40 border-2 border-amber-500 rounded-xl p-2.5 flex flex-col items-center gap-1 glow-gold';
+                    statusTag.innerText = '진행중';
+                    statusTag.className = 'text-[10px] text-amber-400 font-bold status-tag';
+                } else {
+                    questEl.className = 'bg-slate-900/90 border border-slate-700 rounded-xl p-2.5 flex flex-col items-center gap-1 opacity-70';
+                    statusTag.innerText = '대기';
+                    statusTag.className = 'text-[10px] text-slate-500 font-bold status-tag';
+                }
+            }
+
+            // Leader & Selection Setup
+            const currentLeader = state.players[state.leaderIdx];
+            document.getElementById('currentLeaderName').innerText = currentLeader.name;
+
+            const reqCount = state.questSizes[state.currentRound];
+            document.getElementById('requiredMemberCount').innerText = reqCount;
+
+            state.selectedTeam = [];
+            renderPlayerSelectionGrid();
+            updateSelectionCounter();
+        }
+
+        function renderPlayerSelectionGrid() {
+            const grid = document.getElementById('playerSelectionGrid');
+            grid.innerHTML = '';
+
+            state.players.forEach((p, idx) => {
+                const isLeader = idx === state.leaderIdx;
+                const isSelected = state.selectedTeam.includes(idx);
+
+                const card = document.createElement('div');
+                card.onclick = () => togglePlayerSelection(idx);
+                card.className = `p-3.5 rounded-xl border flex items-center justify-between cursor-pointer transition ${
+                    isSelected 
+                        ? 'bg-amber-500/20 border-amber-500 text-amber-200' 
+                        : 'bg-slate-900/90 border-slate-800 hover:border-slate-700 text-slate-300'
+                }`;
+
+                card.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-full ${isLeader ? 'bg-amber-500 text-slate-950' : 'bg-slate-800 text-slate-300'} flex items-center justify-center font-bold text-xs">
+                            ${isLeader ? '<i class="fa-solid fa-crown"></i>' : idx + 1}
+                        </div>
+                        <span class="font-semibold text-sm">${p.name}</span>
+                    </div>
+                    <div class="w-5 h-5 rounded-full border border-slate-600 flex items-center justify-center text-xs">
+                        ${isSelected ? '<i class="fa-solid fa-check text-amber-400"></i>' : ''}
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function togglePlayerSelection(idx) {
+            playSFX('click');
+            const reqCount = state.questSizes[state.currentRound];
+            const selIdx = state.selectedTeam.indexOf(idx);
+
+            if (selIdx > -1) {
+                state.selectedTeam.splice(selIdx, 1);
+            } else {
+                if (state.selectedTeam.length < reqCount) {
+                    state.selectedTeam.push(idx);
+                }
+            }
+
+            renderPlayerSelectionGrid();
+            updateSelectionCounter();
+        }
+
+        function updateSelectionCounter() {
+            const reqCount = state.questSizes[state.currentRound];
+            const countText = document.getElementById('selectionCounter');
+            const proposeBtn = document.getElementById('proposeTeamBtn');
+
+            countText.innerText = `${state.selectedTeam.length} / ${reqCount} 선택됨`;
+
+            if (state.selectedTeam.length === reqCount) {
+                proposeBtn.disabled = false;
+                proposeBtn.className = 'w-full py-3.5 bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 text-slate-950 font-bold rounded-xl shadow-lg transition cursor-pointer glow-gold';
+            } else {
+                proposeBtn.disabled = true;
+                proposeBtn.className = 'w-full py-3.5 bg-slate-800 text-slate-500 font-bold rounded-xl transition cursor-not-allowed';
+            }
+        }
+
+        let currentVoterIdx = 0;
+
+        function submitTeamProposal() {
+            playSFX('click');
+            const teamNames = state.selectedTeam.map(i => state.players[i].name).join(', ');
+            document.getElementById('proposedTeamNames').innerText = teamNames;
+
+            state.votes = {};
+            currentVoterIdx = 0;
+
+            document.getElementById('voteStepContainer').classList.remove('hidden');
+            document.getElementById('voteResultContainer').classList.add('hidden');
+            document.getElementById('voteModal').classList.remove('hidden');
+
+            updateVoterPrompt();
+            speak(`${state.players[state.leaderIdx].name} 님이 원정대를 구성했습니다. 찬반 투표를 시작합니다.`);
+        }
+
+        function updateVoterPrompt() {
+            document.getElementById('voterName').innerText = `${state.players[currentVoterIdx].name} (${currentVoterIdx + 1}/4)`;
+        }
+
+        function castVote(isApprove) {
+            playSFX('click');
+            state.votes[currentVoterIdx] = isApprove;
+            currentVoterIdx++;
+
+            if (currentVoterIdx < 4) {
+                updateVoterPrompt();
+            } else {
+                // All 4 players voted -> Calculate outcome
+                calculateVoteResult();
+            }
+        }
+
+        function calculateVoteResult() {
+            const approveCount = Object.values(state.votes).filter(v => v === true).length;
+            const isApproved = approveCount >= 3; // Majority (3 or 4 votes to pass)
+
+            document.getElementById('voteStepContainer').classList.add('hidden');
+            const resContainer = document.getElementById('voteResultContainer');
+            resContainer.classList.remove('hidden');
+
+            const title = document.getElementById('voteOutcomeTitle');
+            const breakdown = document.getElementById('voteBreakdown');
+            breakdown.innerHTML = '';
+
+            state.players.forEach((p, idx) => {
+                const votedYes = state.votes[idx];
+                const card = document.createElement('div');
+                card.className = `p-2 rounded-lg border text-center ${votedYes ? 'bg-emerald-950/60 border-emerald-500/40 text-emerald-300' : 'bg-rose-950/60 border-rose-500/40 text-rose-300'}`;
+                card.innerHTML = `<div class="truncate font-semibold">${p.name}</div><div class="font-bold">${votedYes ? '찬성' : '반대'}</div>`;
+                breakdown.appendChild(card);
+            });
+
+            if (isApproved) {
+                playSFX('fanfare');
+                title.innerText = `원정대 승인! (찬성 ${approveCount}표)`;
+                title.className = 'text-2xl font-bold text-emerald-400';
+                document.getElementById('proceedQuestBtn').innerText = '원정 수행 진행하기';
+                speak(`원정대가 찬성 ${approveCount}표로 승인되었습니다.`);
+            } else {
+                playSFX('fail');
+                title.innerText = `원정대 부결 (반대 ${4 - approveCount}표)`;
+                title.className = 'text-2xl font-bold text-rose-400';
+                document.getElementById('proceedQuestBtn').innerText = '다음 리더에게 넘기기';
+                speak(`원정대가 부결되었습니다. 원정 거부 카운트가 증가합니다.`);
+            }
+        }
+
+        let questActorIdx = 0;
+
+        function startQuestExecution() {
+            const approveCount = Object.values(state.votes).filter(v => v === true).length;
+            const isApproved = approveCount >= 3;
+
+            document.getElementById('voteModal').classList.add('hidden');
+
+            if (!isApproved) {
+                // Rejected -> increment rejection counter
+                state.rejections++;
+                state.leaderIdx = (state.leaderIdx + 1) % 4;
+
+                if (state.rejections >= 5) {
+                    // 5 Rejections = Evil Wins!
+                    triggerEvilVictory("원정이 5회 연속 거부되어 아발론이 혼란에 빠졌습니다! (악의 세력 승리)");
+                } else {
+                    renderGameBoard();
+                }
+                return;
+            }
+
+            // Reset rejection track on approved quest
+            state.rejections = 0;
+            state.questCards = [];
+            questActorIdx = 0;
+
+            document.getElementById('questModal').classList.remove('hidden');
+            setupQuestActorStep();
+        }
+
+        function setupQuestActorStep() {
+            const playerIdx = state.selectedTeam[questActorIdx];
+            const player = state.players[playerIdx];
+
+            document.getElementById('questActorName').innerText = `${player.name} (${questActorIdx + 1}/${state.selectedTeam.length})`;
+
+            // If player is GOOD, disable Fail card (Good players MUST play Success)
+            const failBtn = document.getElementById('questFailBtn');
+            if (player.role.isGood) {
+                failBtn.disabled = true;
+                failBtn.className = 'py-6 bg-slate-900 border border-slate-800 text-slate-600 font-bold rounded-xl flex flex-col items-center gap-2 cursor-not-allowed opacity-50';
+            } else {
+                failBtn.disabled = false;
+                failBtn.className = 'py-6 bg-rose-950/80 hover:bg-rose-900 border border-rose-500/50 text-rose-300 font-bold rounded-xl transition flex flex-col items-center gap-2 shadow-xl cursor-pointer';
+            }
+        }
+
+        function submitQuestCard(isSuccess) {
+            playSFX('click');
+            state.questCards.push(isSuccess);
+            questActorIdx++;
+
+            if (questActorIdx < state.selectedTeam.length) {
+                setupQuestActorStep();
+            } else {
+                // All quest members submitted -> Calculate Quest Outcome
+                finishQuestExecution();
+            }
+        }
+
+        function finishQuestExecution() {
+            document.getElementById('questModal').classList.add('hidden');
+
+            // Shuffle quest cards so nobody knows who played what
+            const shuffledCards = [...state.questCards].sort(() => Math.random() - 0.5);
+            const failCount = shuffledCards.filter(c => c === false).length;
+            const isQuestSuccess = failCount === 0;
+
+            if (isQuestSuccess) {
+                playSFX('fanfare');
+                state.questHistory.push('success');
+                speak(`원정 결과 발표! 성공 카드가 제출되어 이번 원정은 성공입니다.`);
+            } else {
+                playSFX('fail');
+                state.questHistory.push('fail');
+                speak(`원정 결과 발표! 실패 카드가 ${failCount}장 제출되어 이번 원정은 실패했습니다.`);
+            }
+
+            // Check Overall Win Conditions
+            const goodWins = state.questHistory.filter(h => h === 'success').length;
+            const evilWins = state.questHistory.filter(h => h === 'fail').length;
+
+            state.leaderIdx = (state.leaderIdx + 1) % 4;
+            state.currentRound++;
+
+            if (goodWins >= 3) {
+                // Good completed 3 quests -> Trigger Assassin Phase!
+                setTimeout(startAssassinPhase, 1500);
+            } else if (evilWins >= 3) {
+                // Evil completed 3 quests -> Evil Victory!
+                setTimeout(() => triggerEvilVictory("악의 세력이 원정을 3번 실패시켰습니다!"), 1500);
+            } else {
+                renderGameBoard();
+            }
+        }
+
+        function startAssassinPhase() {
+            speak("선의 세력이 원정 3회를 성공했습니다. 암살자는 메르린을 지목하세요.");
+            const modal = document.getElementById('assassinModal');
+            modal.classList.remove('hidden');
+
+            const grid = document.getElementById('assassinTargetGrid');
+            grid.innerHTML = '';
+
+            // Render Good team players to target
+            state.players.forEach((p, idx) => {
+                if (p.role.isGood) {
+                    const btn = document.createElement('button');
+                    btn.onclick = () => executeAssassination(idx);
+                    btn.className = 'w-full py-3 bg-slate-900 hover:bg-rose-950 border border-slate-700 hover:border-rose-500/50 rounded-xl text-slate-200 hover:text-rose-300 font-bold text-sm transition flex items-center justify-center gap-2';
+                    btn.innerHTML = `<i class="fa-solid fa-crosshairs text-rose-400"></i> ${p.name}`;
+                    grid.appendChild(btn);
+                }
+            });
+        }
+
+        function executeAssassination(targetIdx) {
+            playSFX('click');
+            document.getElementById('assassinModal').classList.add('hidden');
+
+            const targetPlayer = state.players[targetIdx];
+            const isMerlin = targetPlayer.role === ROLES.MERLIN;
+
+            if (isMerlin) {
+                playSFX('fail');
+                triggerEvilVictory(`암살자가 진짜 메르린(${targetPlayer.name})을 암살하는데 성공했습니다! (역전 승리)`);
+            } else {
+                playSFX('fanfare');
+                triggerGoodVictory(`암살자가 메르린 지목에 실패했습니다! (지목된 사람: ${targetPlayer.name})`);
+            }
+        }
+
+        function triggerGoodVictory(reason) {
+            showGameOver(true, "선의 세력 대승리!", reason);
+        }
+
+        function triggerEvilVictory(reason) {
+            showGameOver(false, "악의 세력 승리!", reason);
+        }
+
+        function showGameOver(isGoodWin, title, desc) {
+            document.getElementById('gameBoardView').classList.add('hidden');
+            const view = document.getElementById('gameOverView');
+            view.classList.remove('hidden');
+
+            const badge = document.getElementById('victoryBadge');
+            const titleEl = document.getElementById('victoryTitle');
+            const descEl = document.getElementById('victoryDesc');
+
+            if (isGoodWin) {
+                badge.className = 'w-20 h-20 mx-auto rounded-full bg-blue-500/20 border border-blue-500/50 flex items-center justify-center text-blue-400 text-4xl shadow-xl glow-blue';
+                titleEl.className = 'text-3xl font-bold cinzel text-blue-300';
+            } else {
+                badge.className = 'w-20 h-20 mx-auto rounded-full bg-rose-500/20 border border-rose-500/50 flex items-center justify-center text-rose-400 text-4xl shadow-xl glow-red';
+                badge.innerHTML = '<i class="fa-solid fa-skull"></i>';
+                titleEl.className = 'text-3xl font-bold cinzel text-rose-400';
+            }
+
+            titleEl.innerText = title;
+            descEl.innerText = desc;
+
+            // Render Full Player Identities
+            const list = document.getElementById('finalIdentityList');
+            list.innerHTML = '';
+            state.players.forEach(p => {
+                const row = document.createElement('div');
+                row.className = 'flex justify-between items-center bg-slate-950 p-2.5 rounded-lg border border-slate-800';
+                row.innerHTML = `
+                    <span class="font-bold text-slate-200">${p.name}</span>
+                    <span class="${p.role.isGood ? 'text-blue-400' : 'text-rose-400'} font-semibold">${p.role.icon} ${p.role.name}</span>
+                `;
+                list.appendChild(row);
+            });
+
+            speak(`${title}. ${desc}`);
+        }
+
+        function resetGame() {
+            playSFX('click');
+            window.speechSynthesis.cancel();
+            document.getElementById('gameOverView').classList.add('hidden');
+            document.getElementById('setupView').classList.remove('hidden');
+        }
+
+        function openRulesModal() {
+            playSFX('click');
+            document.getElementById('rulesModal').classList.remove('hidden');
+        }
+
+        function closeRulesModal() {
+            playSFX('click');
+            document.getElementById('rulesModal').classList.add('hidden');
+        }
+    </script>
+</body>
+</html>
